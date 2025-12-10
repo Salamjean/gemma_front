@@ -1,65 +1,68 @@
-import Image from "next/image";
+import Link from 'next/link';
+import Image from 'next/image'; 
+import NavbarHome from '@/components/NavbarHome';
+import { FaUserMd, FaHeartbeat } from 'react-icons/fa'; 
+
+const BenefitCard = ({ icon, title, description, color }) => (
+    <div className={`p-6 rounded-lg bg-white bg-opacity-95 shadow-md border-t-4 border-[#06b6d4] transition duration-300 hover:shadow-lg`}> 
+        <div className={`text-4xl text-[#06b6d4] mx-auto mb-3`}>
+            {icon}
+        </div>
+        <h3 className={`text-lg font-semibold text-primary-blue mb-2`}>{title}</h3>
+        <p className="text-sm text-gray-600">{description}</p>
+    </div>
+);
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+    <div className="min-h-screen flex flex-col relative"> 
+        <div className="fixed top-[64px] inset-x-0 bottom-0 z-0"> 
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+                src="/gemma.jpeg" 
+                alt="Fond médical moderne"
+                fill={true} 
+                style={{objectFit: "cover"}} 
+                quality={80}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <div className="fixed top-[64px] inset-x-0 bottom-0 bg-white opacity-60 backdrop-blur-sm"></div> 
         </div>
-      </main>
+        
+        <NavbarHome />
+
+        <main className="flex flex-1 flex-col items-center justify-center p-4 sm:p-24 pt-24 sm:pt-32 relative z-10"> 
+            
+            <div className="w-full max-w-xl p-8 sm:p-12 bg-white bg-opacity-95 rounded-2xl shadow-2xl border border-gray-100 text-center transform hover:shadow-3xl transition duration-500 mt-8">
+                
+                <FaHeartbeat className="text-6xl text-[#06b6d4] mx-auto mb-6 animate-pulse" /> 
+
+                <h1 className="text-5xl font-extrabold text-primary-blue mb-4">
+                  Votre Espace Patient
+                </h1>
+                <p className="text-xl text-gray-700 mb-10 font-light">
+                  Gérez votre santé en toute simplicité.
+                </p>
+
+                <Link href="/login" passHref>
+                  <button 
+                    className="w-full sm:w-auto px-12 py-4 
+                               bg-[#06b6d4] text-white font-bold text-lg 
+                               rounded-full shadow-xl 
+                               hover:bg-primary-green/90 
+                               transition duration-300 
+                               transform hover:scale-105 hover:shadow-2xl 
+                               focus:outline-none focus:ring-4 focus:ring-primary-green/50"
+                  >
+                    Se Connecter Maintenant
+                  </button>
+                </Link>
+            </div>
+
+            <div className="mt-16 w-full max-w-3xl grid grid-cols-1 sm:grid-cols-3 gap-8 text-center relative z-10">
+                <BenefitCard icon={<FaUserMd />} title="Dossier Médical" description="Accédez à l'historique de vos consultations." color="primary-blue-600"/>
+                <BenefitCard icon={<FaHeartbeat />} title="Rendez-vous" description="Prenez, modifiez et annulez vos RDV facilement." color="primary-green"/>
+                <BenefitCard icon={<FaUserMd />} title="Sécurité" description="Connexion sécurisée par OTP pour votre confidentialité." color="primary-blue"/>
+            </div>
+        </main>
     </div>
   );
 }
