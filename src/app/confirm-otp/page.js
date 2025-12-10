@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { FaUnlockAlt, FaSpinner, FaRedo } from 'react-icons/fa';
@@ -12,7 +12,8 @@ const PRIMARY_BLUE = '#06b6d4';
 const ACCENT_GREEN = '#2da442';
 const ERROR_RED = '#dc2626'; 
 
-export default function ConfirmOtpPage() {
+// Composant principal avec useSearchParams
+function ConfirmOtpContent() {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
@@ -242,5 +243,21 @@ export default function ConfirmOtpPage() {
 
         </div>
     </div>
+  );
+}
+
+// Composant wrapper avec Suspense
+export default function ConfirmOtpPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500 mx-auto"></div>
+          <p className="mt-4 text-cyan-600 font-medium">Chargement de la vérification...</p>
+        </div>
+      </div>
+    }>
+      <ConfirmOtpContent />
+    </Suspense>
   );
 }
