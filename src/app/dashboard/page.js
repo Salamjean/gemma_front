@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
+
 import Link from 'next/link';
 import { 
   FaCalendarCheck, 
@@ -66,17 +67,26 @@ export default function DashboardPage() {
 
     const validateToken = async () => {
       try {
-        const response = await fetch(`https://gemma-ci.com/api/v1/patient/show`, {
+        const response = await fetch('https://gemma-ci.com/api/v1/patient/show', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
         });
         
         if (!response.ok) {
           throw new Error('Token invalide');
         }
+
+        const data = await response.json();
+        if (data.patient) {
+            setPatient(data.patient);
+            // Update local storage to keep it fresh
+            localStorage.setItem('patient_data', JSON.stringify(data.patient));
+        }
+
       } catch (error) {
         console.error('Erreur de validation du token:', error);
       }
@@ -86,13 +96,42 @@ export default function DashboardPage() {
   }, [router]);
 
   const fetchStats = async (token) => {
-    // Remplacez par vos appels API réels
-    setTimeout(() => {
-      setStats({
-        consultations: 5,
-        rendezVous: 2,
+    try {
+      // Récupérer les consultations
+      const consultationsResponse = await fetch('https://gemma-ci.com/api/v1/patient/consultations', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
-    }, 300);
+
+      // Récupérer les rendez-vous
+      const rdvResponse = await fetch('https://gemma-ci.com/api/v1/patient/rdv', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (consultationsResponse.ok && rdvResponse.ok) {
+        const consultationsData = await consultationsResponse.json();
+        const rdvData = await rdvResponse.json();
+
+        setStats({
+          consultations: consultationsData.consultations?.length || 0,
+          rendezVous: rdvData.rdv?.length || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération des statistiques:', error);
+      // Garder les valeurs par défaut en cas d'erreur
+      setStats({
+        consultations: 0,
+        rendezVous: 0,
+      });
+    }
   };
 
   const fetchRecentActivity = async (token) => {
@@ -198,6 +237,8 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+
 
       {/* Section informations patient */}
       <div className="mb-8">

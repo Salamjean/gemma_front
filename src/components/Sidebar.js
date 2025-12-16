@@ -21,6 +21,7 @@ import {
   FaCog,
   FaChevronLeft,
   FaChevronRight,
+  FaIdCard,
 } from "react-icons/fa";
 
 // Variables de couleur
@@ -62,6 +63,12 @@ export default function Sidebar({ handleLogout, setIsSidebarOpen }) {
       href: "/dashboard/rdv",
       icon: FaCalendarAlt,
       description: "Gérer mes RDV",
+    },
+    {
+      name: "Ma Carte",
+      href: "/dashboard/card",
+      icon: FaIdCard,
+      description: "Carte de Soin",
     },
   ];
 

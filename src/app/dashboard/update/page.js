@@ -242,8 +242,20 @@ export default function UpdateProfilePage() {
 
       // Image
       image: null,
-      previewImage:
-        data.img_url || data.user?.img_url || data.user?.image_url || null,
+      previewImage: (() => {
+        const photoUrl = data.img_url || data.photo || data.user?.img_url || data.user?.image_url;
+        if (photoUrl) {
+          // Si c'est déjà une URL complète
+          if (photoUrl.startsWith('http')) {
+            return photoUrl;
+          }
+          // Sinon, construire l'URL complète vers le backend (port 8000)
+          // On utilise l'URL racine sans /api
+          const baseUrl = "https://gemma-ci.com";
+          return `${baseUrl}/public/assets/uploads/patient/${photoUrl}`;
+        }
+        return null;
+      })(),
     };
   };
 
@@ -391,15 +403,36 @@ export default function UpdateProfilePage() {
     const token = localStorage.getItem("patient_token");
     const formDataToSend = new FormData();
 
-    // Ajouter tous les champs au FormData
+    // Mapper les champs du frontend vers les noms attendus par le backend
+    const fieldMapping = {
+      telephone: 'contact1',
+      contact2: 'contact2',
+      residence_actuelle_id: 'residence_actuelle',
+      residence_habituelle_id: 'residence_habituelle',
+      address: 'adresse',
+      nom_personne_cas_urgence: 'nom_persn_sos',
+      telephone_personne_cas_urgence: 'tel_persn_sos',
+      lien_personne_cas_urgence: 'lien_persn_sos',
+      nom_personne2_cas_urgence: 'nom_persn_sos2',
+      telephone_personne2_cas_urgence: 'tel_persn_sos2',
+      lien_personne2_cas_urgence: 'lien_persn_sos2',
+      image: 'image',
+    };
+
+    // Ajouter les champs mappés au FormData
     Object.keys(formData).forEach((key) => {
       if (
         key !== "previewImage" &&
         key !== "img_url" &&
+        key !== "name" &&
+        key !== "prenom" &&
+        key !== "code_patient" &&
         formData[key] !== null &&
         formData[key] !== ""
       ) {
-        formDataToSend.append(key, formData[key]);
+        // Utiliser le nom mappé si disponible, sinon utiliser le nom original
+        const backendFieldName = fieldMapping[key] || key;
+        formDataToSend.append(backendFieldName, formData[key]);
       }
     });
 
@@ -419,8 +452,19 @@ export default function UpdateProfilePage() {
         body: formDataToSend,
       });
 
-      const data = await response.json();
-      console.log("Réponse API:", data);
+      // Vérifier si la réponse est du JSON
+      const contentType = response.headers.get("content-type");
+      let data;
+      
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+        console.log("Réponse API:", data);
+      } else {
+        // Si ce n'est pas du JSON, c'est probablement une erreur HTML
+        const textResponse = await response.text();
+        console.error("Réponse HTML (erreur):", textResponse);
+        throw new Error("Le serveur a retourné une erreur. Vérifiez la console pour plus de détails.");
+      }
 
       if (response.ok) {
         // Mettre à jour les données dans le localStorage
@@ -459,7 +503,7 @@ export default function UpdateProfilePage() {
         throw new Error(data.message || "Erreur lors de la mise à jour");
       }
     } catch (err) {
-      console.error("Erreur:", err);
+      console.error("Erreur complète:", err);
       Swal.fire({
         icon: "error",
         title: "Erreur",
@@ -585,9 +629,10 @@ export default function UpdateProfilePage() {
                   <input
                     type="text"
                     name="name"
+                    readOnly
                     value={formData.name}
                     onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-4 py-2 border rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed ${
                       errors.name ? "border-red-500" : "border-gray-300"
                     }`}
                     placeholder="Votre nom"
@@ -605,9 +650,10 @@ export default function UpdateProfilePage() {
                   <input
                     type="text"
                     name="prenom"
+                    readOnly
                     value={formData.prenom}
                     onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-4 py-2 border rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed ${
                       errors.prenom ? "border-red-500" : "border-gray-300"
                     }`}
                     placeholder="Votre prénom"
@@ -643,7 +689,8 @@ export default function UpdateProfilePage() {
                     name="gender"
                     value={formData.gender}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
                   >
                     <option value="">Sélectionnez</option>
                     {genres.map((option) => (
@@ -665,7 +712,8 @@ export default function UpdateProfilePage() {
                     name="birth_date"
                     value={formData.birth_date}
                     onChange={handleChange}
-                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    readOnly
+                    className={`w-full px-4 py-2 border rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed ${
                       errors.birth_date ? "border-red-500" : "border-gray-300"
                     }`}
                   />
@@ -687,7 +735,8 @@ export default function UpdateProfilePage() {
                     name="country"
                     value={formData.country}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    readOnly
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
                     placeholder="Votre pays de naissance"
                   />
                 </div>
@@ -702,7 +751,8 @@ export default function UpdateProfilePage() {
                     name="type_piece"
                     value={formData.type_piece}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
                   >
                     <option value="">Sélectionnez</option>
                     {typesPiece.map((option) => (
@@ -723,7 +773,8 @@ export default function UpdateProfilePage() {
                     name="numero_identite"
                     value={formData.numero_identite}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    readOnly
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
                     placeholder="Numéro de votre pièce d'identité"
                   />
                 </div>
@@ -737,7 +788,8 @@ export default function UpdateProfilePage() {
                     name="assurer"
                     value={formData.assurer}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
                   >
                     <option value="">Sélectionnez</option>
                     {optionsAssurer.map((option) => (
@@ -758,7 +810,8 @@ export default function UpdateProfilePage() {
                     name="no_assurance"
                     value={formData.no_assurance}
                     onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    readOnly
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
                     placeholder="Votre numéro d'assurance"
                   />
                 </div>

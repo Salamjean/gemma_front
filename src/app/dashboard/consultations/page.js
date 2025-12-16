@@ -53,6 +53,7 @@ export default function ConsultationsPage() {
       }
 
       const data = await response.json();
+      console.log('Consultations data:', data.consultations);
       setConsultations(data.consultations || []);
     } catch (err) {
       console.error('Erreur:', err);
@@ -63,8 +64,16 @@ export default function ConsultationsPage() {
   };
 
   const filteredConsultations = consultations.filter(consult => {
-    const matchesSearch = consult.motif?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          consult.doctor_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const doctorName = consult.doctor?.user 
+      ? `${consult.doctor.user.name} ${consult.doctor.user.prenom || ''}`
+      : consult.doctor_name || '';
+      
+    const searchLower = searchTerm.toLowerCase();
+    const motifMatch = consult.motif?.toLowerCase().includes(searchLower);
+    const doctorMatch = doctorName.toLowerCase().includes(searchLower);
+    const typeMatch = consult.type_consultation?.toLowerCase().includes(searchLower);
+
+    const matchesSearch = motifMatch || doctorMatch || typeMatch;
     
     if (filter === 'all') return matchesSearch;
     if (filter === 'recent') {
@@ -197,6 +206,10 @@ export default function ConsultationsPage() {
 }
 
 const ConsultationCard = ({ consultation }) => {
+  const doctorName = consultation.doctor?.user 
+    ? `Dr. ${consultation.doctor.user.name} ${consultation.doctor.user.prenom || ''}`
+    : consultation.doctor_name || 'Médecin non spécifié';
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 hover:shadow-lg transition-shadow p-6">
       <div className="flex justify-between items-start mb-4">
@@ -206,11 +219,11 @@ const ConsultationCard = ({ consultation }) => {
           </h3>
           <div className="flex items-center text-sm text-gray-600 mb-1">
             <FaUserMd className="mr-2" />
-            <span>{consultation.doctor_name || 'Médecin non spécifié'}</span>
+            <span>{doctorName}</span>
           </div>
           <div className="flex items-center text-sm text-gray-600">
             <FaCalendar className="mr-2" />
-            <span>{new Date(consultation.date).toLocaleDateString('fr-FR', {
+            <span>{new Date(consultation.created_at || consultation.date).toLocaleDateString('fr-FR', {
               day: '2-digit',
               month: '2-digit',
               year: 'numeric'
@@ -218,13 +231,11 @@ const ConsultationCard = ({ consultation }) => {
           </div>
         </div>
         <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-          consultation.statut === 'terminé' 
+          consultation.status == 1 
             ? 'bg-green-100 text-green-800'
-            : consultation.statut === 'annulé'
-            ? 'bg-red-100 text-red-800'
             : 'bg-blue-100 text-blue-800'
         }`}>
-          {consultation.statut || 'programmé'}
+          {consultation.status == 1 ? 'Terminé' : 'En cours'}
         </div>
       </div>
 
@@ -233,22 +244,22 @@ const ConsultationCard = ({ consultation }) => {
           <div>
             <p className="text-xs text-gray-500 mb-1">Heure</p>
             <p className="text-sm font-medium text-gray-900">
-              {consultation.heure || 'Non spécifiée'}
+              {consultation.created_at ? new Date(consultation.created_at).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'}) : 'Non spécifiée'}
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-1">Durée</p>
+            <p className="text-xs text-gray-500 mb-1">Type</p>
             <p className="text-sm font-medium text-gray-900">
-              {consultation.duree || 'Non spécifiée'}
+              {consultation.type_consultation || 'Consultation'}
             </p>
           </div>
         </div>
 
-        {consultation.notes && (
+        {consultation.observation && (
           <div className="mb-4">
-            <p className="text-xs text-gray-500 mb-1">Notes</p>
+            <p className="text-xs text-gray-500 mb-1">Observations</p>
             <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
-              {consultation.notes}
+              {consultation.observation}
             </p>
           </div>
         )}

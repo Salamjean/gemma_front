@@ -118,8 +118,13 @@ export default function DashboardLayout({ children }) {
   return (
     <div className="flex min-h-screen bg-gray-50">
       
-      {/* Sidebar avec animation */}
-      <div className={`fixed inset-y-0 left-0 z-50 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out md:relative md:translate-x-0`}>
+      {/* Sidebar Mobile avec animation */}
+      <div className={`md:hidden fixed inset-y-0 left-0 z-50 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out`}>
+        <Sidebar handleLogout={handleLogout} setIsSidebarOpen={setIsSidebarOpen} />
+      </div>
+
+      {/* Sidebar Desktop toujours visible */}
+      <div className="hidden md:block">
         <Sidebar handleLogout={handleLogout} setIsSidebarOpen={setIsSidebarOpen} />
       </div>
 
