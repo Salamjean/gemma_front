@@ -113,7 +113,53 @@ export default function DashboardLayout({ children }) {
         console.error("Erreur lors du parsing des données patient:", error);
       }
     }
+
+    // Écouter les changements du localStorage pour rafraîchir automatiquement
+    const handleStorageChange = () => {
+      try {
+        const data = localStorage.getItem('patient_data');
+        if (data) {
+          setPatientData(JSON.parse(data));
+          console.log('🔄 Données patient rafraîchies dans le header');
+        }
+      } catch (error) {
+        console.error("Erreur lors du rafraîchissement:", error);
+      }
+    };
+
+    // Écouter l'événement personnalisé
+    window.addEventListener('patientDataUpdated', handleStorageChange);
+    // Écouter aussi les changements de storage (pour les autres onglets)
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('patientDataUpdated', handleStorageChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
+
+  // Fonction pour obtenir l'URL de la photo de profil
+  const getProfilePhotoUrl = () => {
+    // Vérifier plusieurs sources possibles
+    const photoUrl = patientData?.img_url || 
+                     patientData?.user?.img_url || 
+                     patientData?.user?.image_url || 
+                     patientData?.photo;
+    
+    console.log('📸 Photo URL trouvée:', photoUrl);
+    console.log('📦 Patient Data:', patientData);
+    
+    if (photoUrl) {
+      // Si c'est déjà une URL complète
+      if (photoUrl.startsWith('http')) {
+        return photoUrl;
+      }
+      // Construire l'URL complète
+      return `https://gemma-ci.com/public/assets/uploads/patient/${photoUrl}`;
+    }
+    
+    return null;
+  };
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-cyan-50 via-white to-blue-100 relative overflow-hidden">
@@ -197,7 +243,23 @@ export default function DashboardLayout({ children }) {
                   onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                   className="flex items-center focus:outline-none"
                 >
-                  <FaUserCircle className="text-3xl text-white hover:text-[#06b6d4] cursor-pointer transition-colors" />
+                  {getProfilePhotoUrl() ? (
+                    <img 
+                      src={getProfilePhotoUrl()}
+                      alt="Photo de profil"
+                      className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md hover:border-cyan-300 transition-all cursor-pointer"
+                      onError={(e) => {
+                        console.error('❌ Erreur chargement photo:', e.target.src);
+                        e.target.onerror = null;
+                        e.target.style.display = 'none';
+                        e.target.nextElementSibling.style.display = 'block';
+                      }}
+                    />
+                  ) : null}
+                  <FaUserCircle 
+                    className="text-3xl text-white hover:text-cyan-200 cursor-pointer transition-colors" 
+                    style={{ display: getProfilePhotoUrl() ? 'none' : 'block' }}
+                  />
                 </button>
                 
                 {/* Menu déroulant */}

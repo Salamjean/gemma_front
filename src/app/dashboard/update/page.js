@@ -467,29 +467,40 @@ export default function UpdateProfilePage() {
       }
 
       if (response.ok) {
-        // Mettre à jour les données dans le localStorage
-        const updatedPatientData = JSON.parse(
+        console.log("✅ Mise à jour réussie, données retournées:", data);
+        
+        // Récupérer les données actuelles du localStorage
+        const currentPatientData = JSON.parse(
           localStorage.getItem("patient_data") || "{}"
         );
+        
+        // L'API retourne les données mises à jour (vérifier data.patient ou data.data)
+        const updatedFromApi = data.patient || data.data || {};
+        
+        // Mettre à jour avec les nouvelles données
         const updatedData = {
-          ...updatedPatientData,
+          ...currentPatientData,
           ...formData,
+          // IMPORTANT: Récupérer le nouveau img_url de l'API si une image a été uploadée
+          img_url: updatedFromApi.img_url || currentPatientData.img_url,
           user: {
-            ...updatedPatientData.user,
+            ...currentPatientData.user,
             name: formData.name,
             prenom: formData.prenom,
             email: formData.email,
           },
         };
+        
+        console.log("💾 Mise à jour du localStorage avec:", updatedData);
         localStorage.setItem("patient_data", JSON.stringify(updatedData));
+        
+        // Déclencher un événement pour notifier les autres composants (header, etc.)
+        window.dispatchEvent(new Event('patientDataUpdated'));
 
-        // Mettre à jour l'image dans le state si elle a été uploadée
-        if (formData.image && formData.previewImage) {
-          setOriginalData((prev) => ({
-            ...prev,
-            previewImage: formData.previewImage,
-          }));
-        }
+        // Mettre à jour le formData avec les nouvelles données
+        const newFormData = mapApiDataToForm(updatedData);
+        setFormData(newFormData);
+        setOriginalData(newFormData);
 
         Swal.fire({
           icon: "success",
@@ -497,8 +508,6 @@ export default function UpdateProfilePage() {
           text: "Vos informations ont été sauvegardées avec succès",
           confirmButtonColor: ACCENT_GREEN,
         });
-
-        setOriginalData({ ...formData });
       } else {
         throw new Error(data.message || "Erreur lors de la mise à jour");
       }
