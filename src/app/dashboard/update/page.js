@@ -26,7 +26,7 @@ import Swal from "sweetalert2";
 const PRIMARY_BLUE = "#06b6d4";
 const ACCENT_GREEN = "#2da442";
 const ERROR_RED = "#dc2626";
-const API_URL = "http://127.0.0.1:8000/api";
+const API_URL = "https://gemma-ci.com/api";
 
 export default function UpdateProfilePage() {
   const [loading, setLoading] = useState(true);
@@ -249,9 +249,9 @@ export default function UpdateProfilePage() {
           if (photoUrl.startsWith('http')) {
             return photoUrl;
           }
-          // Sinon, construire l'URL complète vers le backend (port 8000)
+          // Sinon, construire l'URL complète vers le backend
           // On utilise l'URL racine sans /api
-          const baseUrl = "http://127.0.0.1:8000";
+          const baseUrl = "https://gemma-ci.com";
           return `${baseUrl}/public/assets/uploads/patient/${photoUrl}`;
         }
         return null;

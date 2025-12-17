@@ -20,7 +20,7 @@ import autoTable from 'jspdf-autotable';
 
 const PRIMARY_BLUE = '#06b6d4';
 const ACCENT_GREEN = '#2da442';
-const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = 'https://gemma-ci.com/api';
 
 export default function DeclarationsPage() {
   const [declarations, setDeclarations] = useState([]);

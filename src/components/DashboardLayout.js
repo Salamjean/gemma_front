@@ -5,7 +5,7 @@ import Sidebar from './Sidebar';
 import { FaSignOutAlt, FaBars, FaUserCircle, FaBell, FaCog } from 'react-icons/fa';
 import { useState, useEffect, useRef } from 'react';
 
-const API_URL = 'http://127.0.0.1:8000/api'; 
+const API_URL = 'https://gemma-ci.com/api'; 
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
