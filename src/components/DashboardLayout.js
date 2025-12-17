@@ -5,7 +5,7 @@ import Sidebar from './Sidebar';
 import { FaSignOutAlt, FaBars, FaUserCircle, FaBell, FaCog } from 'react-icons/fa';
 import { useState, useEffect, useRef } from 'react';
 
-const API_URL = 'https://gemma-ci.com/api'; 
+const API_URL = 'http://127.0.0.1:8000/api'; 
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
@@ -116,7 +116,15 @@ export default function DashboardLayout({ children }) {
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gradient-to-br from-cyan-50 via-white to-blue-100 relative overflow-hidden">
+
+      {/* Arrière-plan Bulles (Bokeh effect) */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute -top-[10%] -left-[10%] w-[40rem] h-[40rem] bg-cyan-300/20 rounded-full blur-[100px] mix-blend-multiply"></div>
+          <div className="absolute top-[20%] -right-[10%] w-[35rem] h-[35rem] bg-blue-300/20 rounded-full blur-[100px] mix-blend-multiply"></div>
+          <div className="absolute -bottom-[10%] left-[20%] w-[40rem] h-[40rem] bg-indigo-300/20 rounded-full blur-[100px] mix-blend-multiply"></div>
+          <div className="absolute bottom-[30%] right-[20%] w-[30rem] h-[30rem] bg-teal-300/20 rounded-full blur-[80px] mix-blend-multiply"></div>
+      </div>
       
       {/* Sidebar Mobile avec animation */}
       <div className={`md:hidden fixed inset-y-0 left-0 z-50 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out`}>
@@ -124,7 +132,7 @@ export default function DashboardLayout({ children }) {
       </div>
 
       {/* Sidebar Desktop toujours visible */}
-      <div className="hidden md:block">
+      <div className="hidden md:block relative z-10">
         <Sidebar handleLogout={handleLogout} setIsSidebarOpen={setIsSidebarOpen} />
       </div>
 
@@ -136,7 +144,7 @@ export default function DashboardLayout({ children }) {
         />
       )}
 
-      <div className="flex flex-col flex-1 md:ml-0">
+      <div className="flex flex-col flex-1 md:ml-0 relative z-10">
         
         {/* Top Navbar modernisée */}
         <header className={`
@@ -272,7 +280,7 @@ export default function DashboardLayout({ children }) {
 
         {/* Contenu principal */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="w-[90%] mx-auto">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
               {children}
             </div>

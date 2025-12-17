@@ -7,7 +7,7 @@ import { FaIdCard, FaSpinner } from 'react-icons/fa';
 
 const PRIMARY_BLUE = '#06b6d4';
 const ACCENT_GREEN = '#2da442';
-const API_URL = 'https://gemma-ci.com/api';
+const API_URL = 'http://127.0.0.1:8000/api';
 
 export default function MedicalCardPage() {
   const [patient, setPatient] = useState(null);

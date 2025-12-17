@@ -5,7 +5,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { FaHeartbeat } from "react-icons/fa";
 import "./MedicalCard.css";
 
-const API_URL = "https://gemma-ci.com";
+const API_URL = "http://127.0.0.1:8000";
 
 export default function MedicalCard({ patient }) {
   const [flipped, setFlipped] = useState(false);

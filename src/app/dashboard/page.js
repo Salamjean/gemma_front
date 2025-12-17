@@ -67,7 +67,7 @@ export default function DashboardPage() {
 
     const validateToken = async () => {
       try {
-        const response = await fetch('https://gemma-ci.com/api/v1/patient/show', {
+        const response = await fetch('http://127.0.0.1:8000/api/v1/patient/show', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -98,7 +98,7 @@ export default function DashboardPage() {
   const fetchStats = async (token) => {
     try {
       // Récupérer les consultations
-      const consultationsResponse = await fetch('https://gemma-ci.com/api/v1/patient/consultations', {
+      const consultationsResponse = await fetch('http://127.0.0.1:8000/api/v1/patient/consultations', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -107,7 +107,7 @@ export default function DashboardPage() {
       });
 
       // Récupérer les rendez-vous
-      const rdvResponse = await fetch('https://gemma-ci.com/api/v1/patient/rdv', {
+      const rdvResponse = await fetch('http://127.0.0.1:8000/api/v1/patient/rdv', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

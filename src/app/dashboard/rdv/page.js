@@ -20,13 +20,13 @@ import Swal from 'sweetalert2';
 const PRIMARY_BLUE = '#06b6d4';
 const ACCENT_GREEN = '#2da442';
 const ERROR_RED = '#dc2626';
-const API_URL = 'https://gemma-ci.com/api';
+const API_URL = 'http://127.0.0.1:8000/api';
 
 export default function RendezVousPage() {
   const [rendezVous, setRendezVous] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState('upcoming');
+  const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [doctors, setDoctors] = useState([]);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
@@ -69,7 +69,46 @@ export default function RendezVousPage() {
     console.log('API Response:', data);
     console.log('Rendez-vous reçus:', data.rdv);
     
-    setRendezVous(data.rdv || []);
+    // Traitement des données pour extraire les informations du champ details si nécessaire
+    const processedRdv = (data.rdv || []).map(rdv => {
+      let details = {};
+      try {
+        if (rdv.details && typeof rdv.details === 'string') {
+          details = JSON.parse(rdv.details);
+        } else if (rdv.details && typeof rdv.details === 'object') {
+          details = rdv.details;
+        }
+      } catch (e) {
+        console.error('Erreur parsing details:', e);
+      }
+
+      // Tentative d'extraction de l'heure
+      let heure = rdv.heure || details.heure;
+      
+      // Si l'heure n'est pas définie, on essaie de l'extraire de la date
+      if (!heure && rdv.date) {
+        const dateStr = rdv.date;
+        // Détection format YYYY-MM-DD HH:mm ou similaire
+        if (dateStr.includes(' ') || dateStr.includes('T')) {
+           const timePart = dateStr.split(/[ T]/)[1]; // Prend la partie après l'espace ou T
+           if (timePart) {
+             // On garde HH:mm
+             heure = timePart.substring(0, 5);
+           }
+        }
+      }
+
+      return {
+        ...rdv,
+        heure: heure || null,
+        // Le schéma montre que 'title' existe, c'est donc lui qui fait office de motif principal
+        motif: rdv.motif || details.motif || rdv.title || 'Motif non spécifié',
+        notes: rdv.notes || details.notes || '',
+        duree: rdv.duree || details.duree || ''
+      };
+    });
+
+    setRendezVous(processedRdv);
   } catch (err) {
     console.error('Erreur complète:', err);
     setError(err.message);
@@ -377,23 +416,105 @@ export default function RendezVousPage() {
     }
   };
 
-  const filteredRendezVous = rendezVous.filter(rdv => {
-    const matchesSearch = rdv.motif?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         rdv.doctor_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         rdv.title?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const rdvDate = new Date(rdv.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  // Helper pour obtenir la date à minuit (00:00:00) pour une comparaison juste de la date
+  const getMidnight = (dateInput) => {
+    if (!dateInput) {
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    }
 
-    if (filter === 'all') return matchesSearch;
-    if (filter === 'upcoming') return matchesSearch && rdvDate >= today;
-    if (filter === 'past') return matchesSearch && rdvDate < today;
-    return matchesSearch;
-  });
+    const str = String(dateInput);
+    
+    // Cas 1: DD/MM/YYYY ou DD-MM-YYYY
+    const ddmmyyyy = /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/;
+    let match = str.match(ddmmyyyy);
+    if (match) {
+      return new Date(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]));
+    }
+
+    // Cas 2: YYYY-MM-DD (Format ISO standard)
+    const yyyymmdd = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/;
+    match = str.match(yyyymmdd);
+    if (match) {
+        return new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
+    }
+    
+    // Cas 3: Fallback standard
+    const d = new Date(dateInput);
+    
+    if (isNaN(d.getTime())) {
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    }
+    
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  };
+
+  const filteredRendezVous = rendezVous
+    .map(rdv => {
+      // Enrichir avec le nom du médecin si manquant
+      let doctorName = rdv.doctor_name;
+      
+      // Essayer de récupérer depuis la relation doctor si elle existe
+      if (!doctorName && rdv.doctor && rdv.doctor.name) {
+          doctorName = `Dr. ${rdv.doctor.name}`;
+      }
+
+      // Sinon chercher dans la liste des médecins chargée via l'ID
+      if (!doctorName && rdv.doctor_id) {
+        const doctor = doctors.find(d => d.id == rdv.doctor_id);
+        if (doctor) {
+          doctorName = `Dr. ${doctor.name}`;
+          if (doctor.specialite) {
+              doctorName += ` - ${doctor.specialite}`;
+          }
+        }
+      }
+      
+      // Debug temporaire si toujours pas de nom mais qu'on a un ID
+      if (!doctorName && rdv.doctor_id) {
+          console.log(`Rendez-vous ${rdv.id}: Doctor ID ${rdv.doctor_id} introuvable dans la liste des ${doctors.length} médecins chargés.`);
+          // doctorName = `Médecin ID: ${rdv.doctor_id}`; // Optionnel : afficher l'ID pour débugger visuellement
+      }
+
+      return { ...rdv, doctor_name: doctorName };
+    })
+    .filter(rdv => {
+      const matchesSearch = (rdv.motif || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (rdv.doctor_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (rdv.title || '').toLowerCase().includes(searchTerm.toLowerCase());
+      
+      let rdvDate = getMidnight(rdv.date);
+      const today = getMidnight(new Date());
+
+      if (filter === 'all') return matchesSearch;
+      if (filter === 'upcoming') return matchesSearch && rdvDate >= today;
+      if (filter === 'past') return matchesSearch && rdvDate < today;
+      return matchesSearch;
+    });
 
   const formatDateTime = (dateString, timeString) => {
-    const date = new Date(dateString);
+    if (!dateString) return { date: 'Date inconnue', time: timeString || '' };
+    
+    // Essayer de parser la date avec notre fonction robuste
+    let date;
+    
+    // Test DD/MM/YYYY ou DD-MM-YYYY
+    const ddmmyyyy = /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/;
+    const match = String(dateString).match(ddmmyyyy);
+    
+    if (match) {
+      // Note: month is 0-indexed in JS Date
+      date = new Date(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]));
+    } else {
+      date = new Date(dateString);
+    }
+    
+    // Si date toujours invalide
+    if (isNaN(date.getTime())) {
+       return { date: dateString, time: timeString || '' };
+    }
+
     const formattedDate = date.toLocaleDateString('fr-FR', {
       weekday: 'long',
       day: 'numeric',
@@ -408,9 +529,11 @@ export default function RendezVousPage() {
   };
 
   const getStatusBadge = (rdv) => {
-    const rdvDate = new Date(rdv.date);
-    const today = new Date();
-    const isToday = rdvDate.toDateString() === today.toDateString();
+    const rdvDate = getMidnight(rdv.date);
+    const today = getMidnight(new Date());
+    
+    // Comparer les timestamps pour l'égalité stricte
+    const isToday = rdvDate.getTime() === today.getTime();
     const isPast = rdvDate < today;
     const status = rdv.status || 'pending';
 
@@ -466,8 +589,9 @@ export default function RendezVousPage() {
             <StatCard
               title="À venir"
               value={rendezVous.filter(rdv => {
-                const rdvDate = new Date(rdv.date);
-                return rdvDate >= new Date() && rdv.status !== 'complete';
+                const rdvDate = getMidnight(rdv.date);
+                const today = getMidnight(new Date());
+                return rdvDate >= today && rdv.status !== 'complete';
               }).length}
               color={ACCENT_GREEN}
               icon={FaClock}
@@ -475,9 +599,9 @@ export default function RendezVousPage() {
             <StatCard
               title="Aujourd'hui"
               value={rendezVous.filter(rdv => {
-                const rdvDate = new Date(rdv.date);
-                const today = new Date();
-                return rdvDate.toDateString() === today.toDateString() && rdv.status !== 'complete';
+                const rdvDate = getMidnight(rdv.date);
+                const today = getMidnight(new Date());
+                return rdvDate.getTime() === today.getTime() && rdv.status !== 'complete';
               }).length}
               color="#f59e0b"
               icon={FaExclamationTriangle}
@@ -508,6 +632,12 @@ export default function RendezVousPage() {
               
               <div className="flex gap-2">
                 <button
+                  onClick={() => setFilter('all')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition ${filter === 'all' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                >
+                  Tous
+                </button>
+                <button
                   onClick={() => setFilter('upcoming')}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition ${filter === 'upcoming' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                 >
@@ -518,12 +648,6 @@ export default function RendezVousPage() {
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition ${filter === 'past' ? 'bg-gray-100 text-gray-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                 >
                   Passés
-                </button>
-                <button
-                  onClick={() => setFilter('all')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition ${filter === 'all' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                >
-                  Tous
                 </button>
               </div>
             </div>
