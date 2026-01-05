@@ -1,11 +1,17 @@
-'use client'; 
+"use client";
 
-import { useRouter } from 'next/navigation';
-import Sidebar from './Sidebar';
-import { FaSignOutAlt, FaBars, FaUserCircle, FaBell, FaCog } from 'react-icons/fa';
-import { useState, useEffect, useRef } from 'react';
+import { useRouter } from "next/navigation";
+import Sidebar from "./Sidebar";
+import {
+  FaSignOutAlt,
+  FaBars,
+  FaUserCircle,
+  FaBell,
+  FaCog,
+} from "react-icons/fa";
+import { useState, useEffect, useRef } from "react";
 
-const API_URL = 'https://gemma-ci.com/api'; 
+const API_URL = "https://gemma-ci.com/api";
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
@@ -20,13 +26,16 @@ export default function DashboardLayout({ children }) {
   // Fermer le menu profil en cliquant en dehors
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target)
+      ) {
         setProfileMenuOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Effet pour détecter le scroll
@@ -35,8 +44,8 @@ export default function DashboardLayout({ children }) {
       setIsScrolled(window.scrollY > 10);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Nettoyer le timeout
@@ -50,21 +59,23 @@ export default function DashboardLayout({ children }) {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    const token = localStorage.getItem('patient_token');
-    
+    const token = localStorage.getItem("patient_token");
+
     try {
       if (token) {
-        const response = await fetch(`${API_URL}/v1/patient/logout`, { 
-          method: 'POST',
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
+        const response = await fetch(`${API_URL}/v1/patient/logout`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
           },
         });
-        
+
         if (!response.ok) {
-          console.warn("La réponse du serveur n'était pas OK, mais on procède à la déconnexion locale");
+          console.warn(
+            "La réponse du serveur n'était pas OK, mais on procède à la déconnexion locale"
+          );
         }
       }
     } catch (error) {
@@ -72,12 +83,12 @@ export default function DashboardLayout({ children }) {
       // On continue quand même avec la déconnexion locale
     } finally {
       // Nettoyage local
-      localStorage.removeItem('patient_token');
-      localStorage.removeItem('patient_data');
-      
+      localStorage.removeItem("patient_token");
+      localStorage.removeItem("patient_data");
+
       // Redirection
-      router.replace('/');
-      
+      router.replace("/");
+
       // Forcer un rechargement pour nettoyer l'état
       setTimeout(() => {
         window.location.reload();
@@ -101,11 +112,11 @@ export default function DashboardLayout({ children }) {
 
   // Récupérer les données du patient depuis le localStorage
   const [patientData, setPatientData] = useState({});
-  
+
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
-        const data = localStorage.getItem('patient_data');
+        const data = localStorage.getItem("patient_data");
         if (data) {
           setPatientData(JSON.parse(data));
         }
@@ -117,10 +128,10 @@ export default function DashboardLayout({ children }) {
     // Écouter les changements du localStorage pour rafraîchir automatiquement
     const handleStorageChange = () => {
       try {
-        const data = localStorage.getItem('patient_data');
+        const data = localStorage.getItem("patient_data");
         if (data) {
           setPatientData(JSON.parse(data));
-          console.log('🔄 Données patient rafraîchies dans le header');
+          console.log("🔄 Données patient rafraîchies dans le header");
         }
       } catch (error) {
         console.error("Erreur lors du rafraîchissement:", error);
@@ -128,81 +139,95 @@ export default function DashboardLayout({ children }) {
     };
 
     // Écouter l'événement personnalisé
-    window.addEventListener('patientDataUpdated', handleStorageChange);
+    window.addEventListener("patientDataUpdated", handleStorageChange);
     // Écouter aussi les changements de storage (pour les autres onglets)
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
 
     return () => {
-      window.removeEventListener('patientDataUpdated', handleStorageChange);
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener("patientDataUpdated", handleStorageChange);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
 
   // Fonction pour obtenir l'URL de la photo de profil
   const getProfilePhotoUrl = () => {
     // Vérifier plusieurs sources possibles
-    const photoUrl = patientData?.img_url || 
-                     patientData?.user?.img_url || 
-                     patientData?.user?.image_url || 
-                     patientData?.photo;
-    
-    console.log('📸 Photo URL trouvée:', photoUrl);
-    console.log('📦 Patient Data:', patientData);
-    
+    const photoUrl =
+      patientData?.img_url ||
+      patientData?.user?.img_url ||
+      patientData?.user?.image_url ||
+      patientData?.photo;
+
+    console.log("📸 Photo URL trouvée:", photoUrl);
+    console.log("📦 Patient Data:", patientData);
+
     if (photoUrl) {
       // Si c'est déjà une URL complète
-      if (photoUrl.startsWith('http')) {
+      if (photoUrl.startsWith("http")) {
         return photoUrl;
       }
       // Construire l'URL complète
       return `https://gemma-ci.com/public/assets/uploads/patient/${photoUrl}`;
     }
-    
+
     return null;
   };
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-cyan-50 via-white to-blue-100 relative overflow-hidden">
-
       {/* Arrière-plan Bulles (Bokeh effect) */}
       <div className="absolute inset-0 pointer-events-none z-0">
-          <div className="absolute -top-[10%] -left-[10%] w-[40rem] h-[40rem] bg-cyan-300/20 rounded-full blur-[100px] mix-blend-multiply"></div>
-          <div className="absolute top-[20%] -right-[10%] w-[35rem] h-[35rem] bg-blue-300/20 rounded-full blur-[100px] mix-blend-multiply"></div>
-          <div className="absolute -bottom-[10%] left-[20%] w-[40rem] h-[40rem] bg-indigo-300/20 rounded-full blur-[100px] mix-blend-multiply"></div>
-          <div className="absolute bottom-[30%] right-[20%] w-[30rem] h-[30rem] bg-teal-300/20 rounded-full blur-[80px] mix-blend-multiply"></div>
+        <div className="absolute -top-[10%] -left-[10%] w-[40rem] h-[40rem] bg-cyan-300/20 rounded-full blur-[100px] mix-blend-multiply"></div>
+        <div className="absolute top-[20%] -right-[10%] w-[35rem] h-[35rem] bg-blue-300/20 rounded-full blur-[100px] mix-blend-multiply"></div>
+        <div className="absolute -bottom-[10%] left-[20%] w-[40rem] h-[40rem] bg-indigo-300/20 rounded-full blur-[100px] mix-blend-multiply"></div>
+        <div className="absolute bottom-[30%] right-[20%] w-[30rem] h-[30rem] bg-teal-300/20 rounded-full blur-[80px] mix-blend-multiply"></div>
       </div>
-      
+
       {/* Sidebar Mobile avec animation */}
-      <div className={`md:hidden fixed inset-y-0 left-0 z-50 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out`}>
-        <Sidebar handleLogout={handleLogout} setIsSidebarOpen={setIsSidebarOpen} />
+      <div
+        className={`md:hidden fixed inset-y-0 left-0 z-50 transform ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } transition-transform duration-300 ease-in-out`}
+      >
+        <Sidebar
+          handleLogout={handleLogout}
+          setIsSidebarOpen={setIsSidebarOpen}
+        />
       </div>
 
       {/* Sidebar Desktop toujours visible */}
       <div className="hidden md:block relative z-10">
-        <Sidebar handleLogout={handleLogout} setIsSidebarOpen={setIsSidebarOpen} />
+        <Sidebar
+          handleLogout={handleLogout}
+          setIsSidebarOpen={setIsSidebarOpen}
+        />
       </div>
 
       {/* Overlay pour mobile */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       <div className="flex flex-col flex-1 md:ml-0 relative z-10">
-        
         {/* Top Navbar modernisée */}
-        <header className={`
+        <header
+          className={`
           sticky top-0 z-30 flex items-center justify-between h-16 md:h-20 px-4 md:px-8 
-          transition-all duration-300 ${isScrolled ? 'bg-[#54b5e0]/95 backdrop-blur-sm shadow-lg' : 'bg-[#06b6d4]'}
+          transition-all duration-300 ${
+            isScrolled
+              ? "bg-[#54b5e0]/95 backdrop-blur-sm shadow-lg"
+              : "bg-[#06b6d4]"
+          }
           border-b border-gray-100
-        `}>
-          
+        `}
+        >
           {/* Section gauche */}
           <div className="flex items-center space-x-4">
             {/* Bouton menu mobile */}
-            <button 
+            <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-[#06b6d4] transition-all"
               aria-label="Menu"
@@ -223,48 +248,51 @@ export default function DashboardLayout({ children }) {
 
           {/* Section droite */}
           <div className="flex items-center space-x-4">
-            
             {/* Profile avec menu déroulant */}
-            <div 
-              className="flex items-center space-x-3 pl-4 border-l border-gray-200 relative" 
+            <div
+              className="flex items-center space-x-3 pl-4 border-l border-gray-200 relative"
               ref={profileMenuRef}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
               <div className="hidden md:flex flex-col items-end">
                 <span className="text-sm font-semibold text-white">
-                  {patientData?.user?.name || 'Utilisateur'} {patientData?.user?.prenom || 'Prénom'}
+                  {patientData?.user?.name || "Utilisateur"}{" "}
+                  {patientData?.user?.prenom || "Prénom"}
                 </span>
                 <span className="text-xs text-white">Patient</span>
               </div>
-              
+
               <div className="relative">
                 <button
                   onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                   className="flex items-center focus:outline-none"
                 >
                   {getProfilePhotoUrl() ? (
-                    <img 
+                    <img
                       src={getProfilePhotoUrl()}
                       alt="Photo de profil"
                       className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md hover:border-cyan-300 transition-all cursor-pointer"
                       onError={(e) => {
-                        console.error('❌ Erreur chargement photo:', e.target.src);
+                        console.error(
+                          "❌ Erreur chargement photo:",
+                          e.target.src
+                        );
                         e.target.onerror = null;
-                        e.target.style.display = 'none';
-                        e.target.nextElementSibling.style.display = 'block';
+                        e.target.style.display = "none";
+                        e.target.nextElementSibling.style.display = "block";
                       }}
                     />
                   ) : null}
-                  <FaUserCircle 
-                    className="text-3xl text-white hover:text-cyan-200 cursor-pointer transition-colors" 
-                    style={{ display: getProfilePhotoUrl() ? 'none' : 'block' }}
+                  <FaUserCircle
+                    className="text-3xl text-white hover:text-cyan-200 cursor-pointer transition-colors"
+                    style={{ display: getProfilePhotoUrl() ? "none" : "block" }}
                   />
                 </button>
-                
+
                 {/* Menu déroulant */}
                 {profileMenuOpen && (
-                  <div 
+                  <div
                     className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
@@ -272,28 +300,29 @@ export default function DashboardLayout({ children }) {
                     {/* Section informations */}
                     <div className="px-4 py-3 border-b">
                       <p className="text-sm font-semibold text-gray-800">
-                        {patientData?.user?.name || 'Nom'} {patientData?.user?.prenom || 'Prénom'}
+                        {patientData?.user?.name || "Nom"}{" "}
+                        {patientData?.user?.prenom || "Prénom"}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {patientData?.user?.email || 'email@example.com'}
+                        {patientData?.user?.email || "email@example.com"}
                       </p>
                       <p className="text-xs text-gray-500">
-                        Code: {patientData?.code_patient || 'N/A'}
+                        Code: {patientData?.code_patient || "N/A"}
                       </p>
                     </div>
-                    
+
                     {/* Liens du menu */}
-                    <button 
+                    <button
                       onClick={() => {
-                        router.push('/dashboard/update');
+                        router.push("/dashboard/update");
                         setProfileMenuOpen(false);
                       }}
                       className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition-colors"
                     >
-                      <FaUserCircle className="mr-2 text-[#06b6d4]" /> 
+                      <FaUserCircle className="mr-2 text-[#06b6d4]" />
                       Mon profil
                     </button>
-                    
+
                     {/* <button 
                       onClick={() => {
                         router.push('/dashboard/settings');
@@ -304,16 +333,16 @@ export default function DashboardLayout({ children }) {
                       <FaCog className="mr-2 text-[#06b6d4]" /> 
                       Paramètres
                     </button> */}
-                    
+
                     <div className="border-t my-1"></div>
-                    
-                    <button 
+
+                    <button
                       onClick={handleLogout}
                       disabled={isLoggingOut}
                       className="w-full text-left px-4 py-2 text-sm text-[#dc2626] hover:bg-red-50 flex items-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <FaSignOutAlt className="mr-2" /> 
-                      {isLoggingOut ? 'Déconnexion...' : 'Déconnexion'}
+                      <FaSignOutAlt className="mr-2" />
+                      {isLoggingOut ? "Déconnexion..." : "Déconnexion"}
                     </button>
                   </div>
                 )}
@@ -327,8 +356,8 @@ export default function DashboardLayout({ children }) {
           <nav className="flex" aria-label="Breadcrumb">
             <ol className="flex items-center space-x-2 text-sm">
               <li>
-                <button 
-                  onClick={() => router.push('/dashboard')}
+                <button
+                  onClick={() => router.push("/dashboard")}
                   className="text-gray-500 hover:text-[#06b6d4] transition-colors"
                 >
                   Dashboard
