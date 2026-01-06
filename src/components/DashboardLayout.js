@@ -167,7 +167,7 @@ export default function DashboardLayout({ children }) {
         return photoUrl;
       }
       // Construire l'URL complète
-      return `https://gemma-ci.com/public/assets/uploads/patient/${photoUrl}`;
+      return `https://gemma-ci.com/assets/uploads/patient/${photoUrl}`;
     }
 
     return null;

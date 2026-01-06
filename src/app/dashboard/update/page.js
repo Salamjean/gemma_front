@@ -264,7 +264,7 @@ export default function UpdateProfilePage() {
           // Sinon, construire l'URL complète vers le backend
           // On utilise l'URL racine sans /api
           const baseUrl = "https://gemma-ci.com";
-          return `${baseUrl}/public/assets/uploads/patient/${photoUrl}`;
+          return `${baseUrl}/assets/uploads/patient/${photoUrl}`;
         }
         return null;
       })(),

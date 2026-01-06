@@ -63,7 +63,7 @@ export default function MedicalCard({ patient }) {
         return photoUrl;
       }
       // Sinon, construire l'URL complète
-      return `${API_URL}/public/assets/uploads/patient/${photoUrl}`;
+      return `${API_URL}/assets/uploads/patient/${photoUrl}`;
     }
 
     // Image par défaut si aucune photo n'existe
